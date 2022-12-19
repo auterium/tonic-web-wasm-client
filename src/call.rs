@@ -13,6 +13,7 @@ use crate::{fetch::fetch, Error, ResponseBody};
 
 pub async fn call(
     mut base_url: String,
+    force_gzip: bool,
     request: Request<BoxBody>,
 ) -> Result<Response<ResponseBody>, Error> {
     base_url.push_str(&request.uri().to_string());
@@ -23,7 +24,12 @@ pub async fn call(
     let request = prepare_request(&base_url, headers, body)?;
     let response = fetch(&request).await?;
 
-    let result = Response::builder().status(response.status());
+    let mut result = Response::builder().status(response.status());
+
+    if force_gzip {
+        result = result.header("grpc-encoding", "gzip");
+    }
+
     let (result, content_type) = set_response_headers(result, &response)?;
 
     let content_type = content_type.ok_or(Error::MissingContentTypeHeader)?;

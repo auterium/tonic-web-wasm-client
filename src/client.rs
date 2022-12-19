@@ -13,12 +13,24 @@ use crate::{call::call, Error, ResponseBody};
 #[derive(Debug, Clone)]
 pub struct Client {
     base_url: String,
+    force_gzip: bool,
 }
 
 impl Client {
     /// Creates a new client
     pub fn new(base_url: String) -> Self {
-        Self { base_url }
+        Self {
+            base_url,
+            force_gzip: false,
+        }
+    }
+
+    /// Creates a new client that forces gzip header
+    pub fn new_with_gzip_forced(base_url: String) -> Self {
+        Self {
+            base_url,
+            force_gzip: true,
+        }
     }
 }
 
@@ -34,6 +46,6 @@ impl GrpcService<BoxBody> for Client {
     }
 
     fn call(&mut self, request: Request<BoxBody>) -> Self::Future {
-        Box::pin(call(self.base_url.clone(), request))
+        Box::pin(call(self.base_url.clone(), self.force_gzip, request))
     }
 }
